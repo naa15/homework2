@@ -36,6 +36,47 @@ public class Piece {
 	*/
 	public Piece(TPoint[] points) {
 		// YOUR CODE HERE
+		int minX = Integer.MAX_VALUE;
+		int maxX= Integer.MIN_VALUE;
+		int minY = Integer.MAX_VALUE;
+		int maxY = Integer.MIN_VALUE;
+		body = new TPoint[points.length];
+		for(int i=0; i<points.length; i++) {
+			body[i] = new TPoint(points[i]);
+			if(body[i].x < minX) {
+				minX = body[i].x;
+			}
+			if(body[i].y < minY) {
+				minY = body[i].y;
+			}
+			if(body[i].x > maxX) {
+				maxX = body[i].x;
+			}
+			if(body[i].y > maxY) {
+				maxY = body[i].y;
+			}
+		}
+		width = maxX - minX + 1;
+		height = maxY - minY + 1;
+		//System.out.println(width);
+		//System.out.println(height);
+		skirt = new int[width];
+		int minSkirt = Integer.MAX_VALUE;
+		for (int i = 0; i < skirt.length; i++) {
+			for (int j = 0; j < body.length; j++) {
+				if(body[j].x == i) {
+					if(body[j].y < minSkirt) {
+						minSkirt = body[j].y;
+					}
+				}
+			}
+			skirt[i] = minSkirt;
+			minSkirt = Integer.MAX_VALUE;
+		}
+		for (int i = 0; i < skirt.length; i++) {
+			System.out.print(skirt[i]);
+		}
+		System.out.println();
 	}
 	
 

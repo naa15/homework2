@@ -58,8 +58,6 @@ public class Piece {
 		}
 		width = maxX - minX + 1;
 		height = maxY - minY + 1;
-		//System.out.println(width);
-		//System.out.println(height);
 		skirt = new int[width];
 		int minSkirt = Integer.MAX_VALUE;
 		for (int i = 0; i < skirt.length; i++) {
@@ -73,10 +71,6 @@ public class Piece {
 			skirt[i] = minSkirt;
 			minSkirt = Integer.MAX_VALUE;
 		}
-		for (int i = 0; i < skirt.length; i++) {
-			System.out.print(skirt[i]);
-		}
-		System.out.println();
 	}
 	
 
@@ -129,7 +123,13 @@ public class Piece {
 	 rotated from the receiver.
 	 */
 	public Piece computeNextRotation() {
-		return null; // YOUR CODE HERE
+		Piece result;
+		TPoint[] arr = new TPoint[body.length];
+		for (int i = 0; i < body.length; i++) {
+			arr[i] = new TPoint(height-body[i].y-1, body[i].x);
+		}
+		result = new Piece(arr);
+		return result;
 	}
 
 	/**
@@ -228,7 +228,18 @@ public class Piece {
 	 to the first piece.
 	*/
 	private static Piece makeFastRotations(Piece root) {
-		return null; // YOUR CODE HERE
+		Piece res = new Piece(root.body);
+		Piece tmp = res;
+		while(true) {
+			Piece p = res.computeNextRotation();
+			if(tmp.equals(p)) {
+				res.next = tmp;
+				break;
+			}
+			res.next = p;
+			res = res.next;
+		}
+		return tmp;
 	}
 	
 	

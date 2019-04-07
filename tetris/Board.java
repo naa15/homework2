@@ -1,6 +1,8 @@
 // Board.java
 package tetris;
 
+import java.util.Arrays;
+
 import javax.swing.text.StyledEditorKit.ForegroundAction;
 
 /**
@@ -21,8 +23,9 @@ public class Board	{
 	
 	private int[] widths;
 	private int[] heights;
-	private Piece last;
-	// Here a few trivial methods are provided:
+	private int[] oldW;
+	private int[] oldH;
+	private boolean[][] oldG;
 	
 	/**
 	 Creates an empty board of the given width and height
@@ -32,10 +35,13 @@ public class Board	{
 		this.width = width;
 		this.height = height;
 		grid = new boolean[width][height];
+		oldG = new boolean[width][height];
 		committed = true;
 		
 		widths = new int[height];
 		heights = new int[width];
+		oldW = new int[height];
+		oldH = new int[height];
 		for (int i = 0; i < width; i++) {
 			heights[i]= 0;
 		}
@@ -82,37 +88,29 @@ public class Board	{
 	*/
 	public void sanityCheck() {
 		if (DEBUG) {
-			int rowlen = 0;
-			for (int i = 0; i < height; i++) {
-				for (int j = 0; j < width; j++) {
-					if(grid[i][j]) {
-						rowlen++;
-					}
-					if(rowlen != widths[i]) {
-						throw new RuntimeException("widths array is incorrect");
-					}
-					rowlen = 0;
-				}
-			}
-			int collen = 0;
-			int max = 0;
+			int [] widthlen = new int[height];
+			int maxH = 0;
 			for (int i = 0; i < width; i++) {
-				for (int j = 0; j < height; j++) {
+				int heightlen = 0;
+				for (int j=0; j<height; j++) {
 					if(grid[i][j]) {
-						collen++;
+						heightlen = j+1;
+						widthlen[j]++;
+						if(maxH < j+1) {
+							maxH = j+1;
+						}
 					}
-					if(collen != heights[i]) {
-						throw new RuntimeException("heights array is incorrect");
-					}
-					if(collen > max) {
-						max = collen;
-					}
-					collen = 0;
+				}
+				if(heightlen != heights[i]) {
+					throw new RuntimeException("heights array is incorrect");
 				}
 			}
-			if(max != getMaxHeight()) {
-				throw new RuntimeException("getMaxHeight() is incorrect");
+			if(!Arrays.equals(widthlen, widths)) {
+				throw new RuntimeException("heights array is incorrect");
 			}
+			if(maxH != getMaxHeight()) {
+				throw new RuntimeException("max height is incorrect");
+			}	
 		}
 	}
 	
@@ -170,10 +168,8 @@ public class Board	{
 	 always return true.
 	*/
 	public boolean getGrid(int x, int y) {
-		if(x < width && x >= 0 && y<height && y>=0) {
-			if(grid[x][y]) {
+		if(x < width || x >= 0 || y<height || y>=0 || grid[x][y]) {
 				return true;
-			}
 		}
 	
 		return false;
@@ -199,11 +195,16 @@ public class Board	{
 	 In both error cases, the board may be left in an invalid
 	 state. The client can use undo(), to recover the valid, pre-place state.
 	*/
+
 	public int place(Piece piece, int x, int y) {
 		// flag !committed problem
 		if (!committed) throw new RuntimeException("place commit problem");
-			
+		
+		committed = false;
 		int result = PLACE_OK;
+		saveGrid();
+		saveW();
+		saveH();
 		TPoint [] body = piece.getBody();
 		int xcor = -1;
 		int ycor = -1;
@@ -211,15 +212,23 @@ public class Board	{
 			xcor = x + body[i].x;
 			ycor = y + body[i].y;
 			if(xcor<0 || xcor >= width || ycor>= height || ycor<0) {
+				sanityCheck();
 				return PLACE_OUT_BOUNDS;
 			}
 			if(grid[xcor][ycor]) {
+				sanityCheck();
 				return PLACE_BAD;
 			}
 			grid[xcor][ycor] = true;
-			heights[xcor]++;
 			widths[ycor]++;
+			if(heights[xcor]<ycor+1) {
+				heights[xcor] = ycor+1;
+			}
+			if(widths[ycor] == width) {
+				result = PLACE_ROW_FILLED;
+			}
 		}
+		sanityCheck();
 		return result;
 	}
 	
@@ -230,12 +239,90 @@ public class Board	{
 	*/
 	public int clearRows() {
 		int rowsCleared = 0;
-		// YOUR CODE HERE
+		if(committed)
+		{
+			committed=false;
+			saveGrid();
+			saveH();
+			saveW();
+		}
+
+		boolean hasFilledRow = false;
+		int rowTo,rowFrom;
+		rowsCleared = 0;
+
+		// clearing row using a single pass method given in the handout
+		for(rowTo=0,rowFrom =1;rowFrom<getMaxHeight();rowTo++,rowFrom++)
+		{
+			if(!hasFilledRow && widths[rowTo]==width)
+			{
+				hasFilledRow=true;
+				rowsCleared++;
+			}
+
+			while(hasFilledRow && rowFrom<getMaxHeight() && widths[rowFrom]==width)
+			{
+				rowsCleared++;
+				rowFrom++;
+			}
+
+			if(hasFilledRow)
+				copySingleRow(rowTo,rowFrom);
+
+		}
+
+		if(hasFilledRow)
+			fillEmptyRows(rowTo,getMaxHeight());
+
+		
+		for(int i =0;i < heights.length;i++)
+		{
+			heights[i]-=rowsCleared;
+			if(heights[i]>0 && !grid[i][heights[i]-1])
+			{
+				heights[i]=0;
+				for (int j = 0;j<getMaxHeight();j++ )
+					if(grid[i][j])
+						heights[i] = j+1;
+			}
+		}
+
+		
+
 		sanityCheck();
 		return rowsCleared;
 	}
 
+	private void fillEmptyRows(int lowRow, int highRow) {
 
+		for(int j = lowRow;j<highRow;j++){
+			widths[j]=0;
+			for(int i = 0;i<width;i++)
+				grid[i][j] =false;
+
+		}
+	}
+
+
+	private void copySingleRow(int rowTo, int rowFrom) {
+
+		if(rowFrom<getMaxHeight())
+		{
+			for(int i = 0;i<width;i++)
+			{
+				grid[i][rowTo] = grid[i][rowFrom];
+				widths[rowTo] = widths[rowFrom];
+			}
+		}
+		else
+		{
+			for(int i = 0;i<width;i++)
+			{
+				grid[i][rowTo] = false;
+				widths[rowTo] = 0;
+			}
+		}
+	}
 
 	/**
 	 Reverts the board to its state before up to one place
@@ -245,7 +332,44 @@ public class Board	{
 	 See the overview docs.
 	*/
 	public void undo() {
-		// YOUR CODE HERE
+		if(committed == false) {
+			boolean [][] tmp = new boolean[width][height];
+			for (int i = 0; i < width; i++) {
+				for (int j = 0; j < height; j++) {
+					tmp[i][j] = oldG[i][j];
+				}
+			}
+			saveGrid();
+			for (int i = 0; i < width; i++) {
+				for (int j = 0; j < height; j++) {
+					grid[i][j] = tmp[i][j];
+				}
+			}
+			
+			int []tmpW = new int[widths.length];
+			for (int i = 0; i < widths.length; i++) {
+				tmpW[i] = oldW[i];
+			}
+			for (int i = 0; i < widths.length; i++) {
+				oldW[i] = widths[i];
+			}
+			for (int i = 0; i < widths.length; i++) {
+				widths[i] = tmpW[i];
+			}
+			
+			int []tmpH = new int[heights.length];
+			for (int i = 0; i < heights.length; i++) {
+				tmpH[i] = oldH[i];
+			}
+			for (int i = 0; i < heights.length; i++) {
+				oldH[i] = heights[i];
+			}
+			for (int i = 0; i < heights.length; i++) {
+				heights[i] = tmpH[i];
+			}
+		}
+		commit();
+		sanityCheck();
 	}
 	
 	
@@ -276,6 +400,18 @@ public class Board	{
 		}
 		for (int x=0; x<width+2; x++) buff.append('-');
 		return(buff.toString());
+	}
+	
+	
+	private void saveGrid() {
+		for(int i =0;i<grid.length;i++)
+			System.arraycopy(grid[i], 0, oldG[i], 0, grid[i].length);
+	}
+	private void saveW() {
+		System.arraycopy(widths, 0, oldW, 0, widths.length);
+	}
+	private void saveH() {
+		System.arraycopy(heights, 0, oldH, 0, heights.length);
 	}
 }
 

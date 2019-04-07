@@ -72,16 +72,12 @@ public class PieceTest {
 	public void testFastRotations() {
 		Piece L1 = pieces[Piece.L1];
 		Piece L1rotation1 = L1.computeNextRotation();
-		Piece L1rotation2 = L1rotation1.computeNextRotation();
-		Piece L1rotation3 = L1rotation2.computeNextRotation();
-		Piece L1rotation4 = L1rotation3.computeNextRotation();
 		assertEquals(L1rotation1, L1.fastRotation());
-		//assertEquals(L1rotation2, L1rotation1.fastRotation());
-		//assertEquals(L1rotation3, L1rotation2.fastRotation());
-		//assertEquals(L1rotation4, L1rotation3.fastRotation());
 
-		//assertEquals(pyr3, pyr2.fastRotation());
-		//assertEquals(pyr4, pyr3.fastRotation());
-		//assertEquals(pyr1, pyr4.fastRotation());
+		Piece pyr = pieces[Piece.PYRAMID];
+		Piece pyrFR = pyr.fastRotation();
+		Piece pyrFR2 = pyrFR.fastRotation();
+		assertEquals(pyrFR, pyr2);
+		assertEquals(pyrFR2, pyr3);
 	}
 }

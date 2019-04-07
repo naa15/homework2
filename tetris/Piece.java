@@ -161,7 +161,19 @@ public class Piece {
 		if (!(obj instanceof Piece)) return false;
 		Piece other = (Piece)obj;
 		
-		// YOUR CODE HERE
+		// source:
+		// https://stackoverflow.com/questions/16317862/java-sort-array-which-contain-points?fbclid=IwAR1Y8SEEwLeB_i-F19XIivpeHLsa3FuOBwySamJkvtMiUhcN5FJo7NKXG1A
+		Arrays.sort(other.getBody(), new Comparator<TPoint>() {
+			
+			@Override
+			public int compare(TPoint a, TPoint b) {
+		        int xComp = Integer.compare(a.x, b.x);
+		        if(xComp == 0)
+		            return Integer.compare(a.y, b.y);
+		        else
+		            return xComp;
+		    }
+		});
 		return true;
 	}
 

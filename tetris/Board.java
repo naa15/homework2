@@ -72,13 +72,22 @@ public class Board	{
 	 For an empty board this is 0.
 	*/
 	public int getMaxHeight() {	
-		int max = 0;
+		/*int max = 0;
 		for (int i = 0; i < width; i++) {
 			if(heights[i] > max) {
 				max = heights[i];
 			}
 		}
 		return max;
+		*/
+		int maxHeight = 0;
+		for (int i = 0 ; i<heights.length;i++)
+		{
+			if(maxHeight<heights[i])
+				maxHeight = heights[i];
+		}
+		return maxHeight;
+
 	}
 	
 	
@@ -110,7 +119,7 @@ public class Board	{
 			}
 			if(maxH != getMaxHeight()) {
 				throw new RuntimeException("max height is incorrect");
-			}	
+			}
 		}
 	}
 	
@@ -239,91 +248,35 @@ public class Board	{
 	*/
 	public int clearRows() {
 		int rowsCleared = 0;
-		if(committed)
-		{
+		if (committed) {
 			committed=false;
 			saveGrid();
 			saveH();
 			saveW();
 		}
 
-		boolean hasFilledRow = false;
-		int rowTo,rowFrom;
-		rowsCleared = 0;
-
-		// clearing row using a single pass method given in the handout
-		for(rowTo=0,rowFrom =1;rowFrom<getMaxHeight();rowTo++,rowFrom++)
-		{
-			if(!hasFilledRow && widths[rowTo]==width)
-			{
-				hasFilledRow=true;
+		for(int i=0; i<height; i++) {
+			if(widths[i] == width) {
 				rowsCleared++;
-			}
-
-			while(hasFilledRow && rowFrom<getMaxHeight() && widths[rowFrom]==width)
-			{
-				rowsCleared++;
-				rowFrom++;
-			}
-
-			if(hasFilledRow)
-				copySingleRow(rowTo,rowFrom);
-
-		}
-
-		if(hasFilledRow)
-			fillEmptyRows(rowTo,getMaxHeight());
-
-		
-		for(int i =0;i < heights.length;i++)
-		{
-			heights[i]-=rowsCleared;
-			if(heights[i]>0 && !grid[i][heights[i]-1])
-			{
-				heights[i]=0;
-				for (int j = 0;j<getMaxHeight();j++ )
-					if(grid[i][j])
-						heights[i] = j+1;
+				clearRow(i);
 			}
 		}
-
-		
+		for (int i = 0; i < width; i++) {
+			heights[i] = heights[i] - rowsCleared;
+		}
 
 		sanityCheck();
 		return rowsCleared;
 	}
-
-	private void fillEmptyRows(int lowRow, int highRow) {
-
-		for(int j = lowRow;j<highRow;j++){
-			widths[j]=0;
-			for(int i = 0;i<width;i++)
-				grid[i][j] =false;
-
-		}
-	}
-
-
-	private void copySingleRow(int rowTo, int rowFrom) {
-
-		if(rowFrom<getMaxHeight())
-		{
-			for(int i = 0;i<width;i++)
-			{
-				grid[i][rowTo] = grid[i][rowFrom];
-				widths[rowTo] = widths[rowFrom];
-			}
-		}
-		else
-		{
-			for(int i = 0;i<width;i++)
-			{
-				grid[i][rowTo] = false;
-				widths[rowTo] = 0;
+	
+	private void clearRow(int index) {
+		for (int i = 0; i < width; i++) {
+			for (int j = index; j < getMaxHeight(); j++) {
+				widths[j] = widths[j+1];
+				grid[i][j] = grid[i][j+1];
 			}
 		}
 	}
-
 	/**
 	 Reverts the board to its state before up to one place
 	 and one clearRows();
@@ -404,8 +357,11 @@ public class Board	{
 	
 	
 	private void saveGrid() {
-		for(int i =0;i<grid.length;i++)
-			System.arraycopy(grid[i], 0, oldG[i], 0, grid[i].length);
+		for(int i =0;i<width;i++) {
+			for (int j = 0; j < height; j++) {
+				oldG[i][j] = grid[i][j];
+			}
+		}
 	}
 	private void saveW() {
 		System.arraycopy(widths, 0, oldW, 0, widths.length);

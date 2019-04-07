@@ -2,6 +2,8 @@ package tetris;
 
 import static org.junit.Assert.*;
 
+import java.util.Arrays;
+
 import org.junit.*;
 
 public class BoardTest {

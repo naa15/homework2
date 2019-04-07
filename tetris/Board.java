@@ -1,6 +1,8 @@
 // Board.java
 package tetris;
 
+import javax.swing.text.StyledEditorKit.ForegroundAction;
+
 /**
  CS108 Tetris Board.
  Represents a Tetris board -- essentially a 2-d grid
@@ -17,7 +19,9 @@ public class Board	{
 	private boolean DEBUG = true;
 	boolean committed;
 	
-	
+	private int[] widths;
+	private int[] heights;
+	private Piece last;
 	// Here a few trivial methods are provided:
 	
 	/**
@@ -30,7 +34,14 @@ public class Board	{
 		grid = new boolean[width][height];
 		committed = true;
 		
-		// YOUR CODE HERE
+		widths = new int[height];
+		heights = new int[width];
+		for (int i = 0; i < width; i++) {
+			heights[i]= 0;
+		}
+		for (int i = 0; i < height; i++) {
+			widths[i] = 0;
+		}
 	}
 	
 	
@@ -54,8 +65,14 @@ public class Board	{
 	 Returns the max column height present in the board.
 	 For an empty board this is 0.
 	*/
-	public int getMaxHeight() {	 
-		return 0; // YOUR CODE HERE
+	public int getMaxHeight() {	
+		int max = 0;
+		for (int i = 0; i < width; i++) {
+			if(heights[i] > max) {
+				max = heights[i];
+			}
+		}
+		return max;
 	}
 	
 	
@@ -65,7 +82,37 @@ public class Board	{
 	*/
 	public void sanityCheck() {
 		if (DEBUG) {
-			// YOUR CODE HERE
+			int rowlen = 0;
+			for (int i = 0; i < height; i++) {
+				for (int j = 0; j < width; j++) {
+					if(grid[i][j]) {
+						rowlen++;
+					}
+					if(rowlen != widths[i]) {
+						throw new RuntimeException("widths array is incorrect");
+					}
+					rowlen = 0;
+				}
+			}
+			int collen = 0;
+			int max = 0;
+			for (int i = 0; i < width; i++) {
+				for (int j = 0; j < height; j++) {
+					if(grid[i][j]) {
+						collen++;
+					}
+					if(collen != heights[i]) {
+						throw new RuntimeException("heights array is incorrect");
+					}
+					if(collen > max) {
+						max = collen;
+					}
+					collen = 0;
+				}
+			}
+			if(max != getMaxHeight()) {
+				throw new RuntimeException("getMaxHeight() is incorrect");
+			}
 		}
 	}
 	
@@ -79,7 +126,22 @@ public class Board	{
 	 to compute this fast -- O(skirt length).
 	*/
 	public int dropHeight(Piece piece, int x) {
-		return 0; // YOUR CODE HERE
+		int [] sk = piece.getSkirt();
+		int maxY = -1;
+		int index = -1;
+		for (int i = 0; i < piece.getWidth(); i++) {
+			if(heights[x+i] > maxY) {
+				maxY = heights[x+i];
+				index = i;
+			}
+		}
+		int res = maxY-(Math.abs(sk[index]-sk[0]));
+		while(true) {
+			if(res >= heights[x]) {
+				return res;
+			} 
+			res++;
+		}
 	}
 	
 	
@@ -89,7 +151,7 @@ public class Board	{
 	 The height is 0 if the column contains no blocks.
 	*/
 	public int getColumnHeight(int x) {
-		return 0; // YOUR CODE HERE
+		return heights[x];
 	}
 	
 	
@@ -98,7 +160,7 @@ public class Board	{
 	 the given row.
 	*/
 	public int getRowWidth(int y) {
-		 return 0; // YOUR CODE HERE
+		return widths[y];
 	}
 	
 	
@@ -108,7 +170,13 @@ public class Board	{
 	 always return true.
 	*/
 	public boolean getGrid(int x, int y) {
-		return false; // YOUR CODE HERE
+		if(x < width && x >= 0 && y<height && y>=0) {
+			if(grid[x][y]) {
+				return true;
+			}
+		}
+	
+		return false;
 	}
 	
 	
@@ -136,9 +204,22 @@ public class Board	{
 		if (!committed) throw new RuntimeException("place commit problem");
 			
 		int result = PLACE_OK;
-		
-		// YOUR CODE HERE
-		
+		TPoint [] body = piece.getBody();
+		int xcor = -1;
+		int ycor = -1;
+		for (int i = 0; i < body.length; i++) {
+			xcor = x + body[i].x;
+			ycor = y + body[i].y;
+			if(xcor<0 || xcor >= width || ycor>= height || ycor<0) {
+				return PLACE_OUT_BOUNDS;
+			}
+			if(grid[xcor][ycor]) {
+				return PLACE_BAD;
+			}
+			grid[xcor][ycor] = true;
+			heights[xcor]++;
+			widths[ycor]++;
+		}
 		return result;
 	}
 	

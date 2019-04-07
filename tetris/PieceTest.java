@@ -19,6 +19,7 @@ public class PieceTest {
 	private Piece pyr1, pyr2, pyr3, pyr4;
 	private Piece s, sRotated;
 
+	private Piece[] pieces;
 	@Before
 	public void setUp() throws Exception {
 		
@@ -29,6 +30,9 @@ public class PieceTest {
 		
 		s = new Piece(Piece.S1_STR);
 		sRotated = s.computeNextRotation();
+		
+		pieces = Piece.getPieces();
+		
 	}
 	
 	// Here are some sample tests to get you started
@@ -66,8 +70,7 @@ public class PieceTest {
 	// Test fastRotations
 	@Test
 	public void testFastRotations() {
-		Piece[] pieces = Piece.getPieces();
-		Piece L1 = pieces[1];
+		Piece L1 = pieces[Piece.L1];
 		Piece L1rotation1 = L1.computeNextRotation();
 		Piece L1rotation2 = L1rotation1.computeNextRotation();
 		Piece L1rotation3 = L1rotation2.computeNextRotation();
